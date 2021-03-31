@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using API.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -25,14 +27,24 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IList<Product>>> GetProduct()
+        public async Task<ActionResult<IList<ProductToReturnDto>>> GetProduct()
         {
             var spec = new ProductsWithTypeAndBrandSpecificaion();
             var products = await _repoProduct.ListAsync(spec);
 
             if (products != null)
             {
-                return Ok(products);
+                //return Ok(products);
+                return products.Select(product=> new ProductToReturnDto
+                {
+                Id = product.Id,
+                Description = product.Description,
+                Name = product.Name,
+                Price = product.Price,
+                PictureUrl = product.PictureUrl,
+                ProductBrand = product.ProductBrand.Name,
+                ProductType = product.ProductType.Name
+                }).ToList();
             }
             else
             {
@@ -72,10 +84,21 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
              var spec = new ProductsWithTypeAndBrandSpecificaion(id);
             var product = await _repoProduct.GetEntityWithSpec(spec);
+
+            return new ProductToReturnDto 
+            {
+                Id = product.Id,
+                Description = product.Description,
+                Name = product.Name,
+                Price = product.Price,
+                PictureUrl = product.PictureUrl,
+                ProductBrand = product.ProductBrand.Name,
+                ProductType = product.ProductType.Name
+            };
 
             if (product != null)
             {
