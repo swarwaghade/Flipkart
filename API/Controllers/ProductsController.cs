@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
+using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -17,10 +18,13 @@ namespace API.Controllers
         private readonly IGenericRepository<Product> _repoProduct;
         private readonly IGenericRepository<ProductBrand> _repoProductBrand;
         private readonly IGenericRepository<ProductType> _repoProductType;
+        private readonly IMapper mapper;
 
         public ProductsController(IGenericRepository<Product> repoProduct
-        ,IGenericRepository<ProductBrand> repoProductBrand,IGenericRepository<ProductType> repoProductType)
+        , IGenericRepository<ProductBrand> repoProductBrand, IGenericRepository<ProductType> repoProductType
+        , IMapper mapper)
         {
+            this.mapper = mapper;
             _repoProduct = repoProduct;
             _repoProductBrand = repoProductBrand;
             _repoProductType = repoProductType;
@@ -35,15 +39,15 @@ namespace API.Controllers
             if (products != null)
             {
                 //return Ok(products);
-                return products.Select(product=> new ProductToReturnDto
+                return products.Select(product => new ProductToReturnDto
                 {
-                Id = product.Id,
-                Description = product.Description,
-                Name = product.Name,
-                Price = product.Price,
-                PictureUrl = product.PictureUrl,
-                ProductBrand = product.ProductBrand.Name,
-                ProductType = product.ProductType.Name
+                    Id = product.Id,
+                    Description = product.Description,
+                    Name = product.Name,
+                    Price = product.Price,
+                    PictureUrl = product.PictureUrl,
+                    ProductBrand = product.ProductBrand.Name,
+                    ProductType = product.ProductType.Name
                 }).ToList();
             }
             else
@@ -52,7 +56,7 @@ namespace API.Controllers
             }
         }
 
-        
+
         [HttpGet("types")]
         public async Task<ActionResult<IList<ProductType>>> GetProductTypes()
         {
@@ -86,23 +90,24 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
-             var spec = new ProductsWithTypeAndBrandSpecificaion(id);
+            var spec = new ProductsWithTypeAndBrandSpecificaion(id);
             var product = await _repoProduct.GetEntityWithSpec(spec);
 
-            return new ProductToReturnDto 
-            {
-                Id = product.Id,
-                Description = product.Description,
-                Name = product.Name,
-                Price = product.Price,
-                PictureUrl = product.PictureUrl,
-                ProductBrand = product.ProductBrand.Name,
-                ProductType = product.ProductType.Name
-            };
+            // return new ProductToReturnDto
+            // {
+            //     Id = product.Id,
+            //     Description = product.Description,
+            //     Name = product.Name,
+            //     Price = product.Price,
+            //     PictureUrl = product.PictureUrl,
+            //     ProductBrand = product.ProductBrand.Name,
+            //     ProductType = product.ProductType.Name
+            // };
+           
 
             if (product != null)
             {
-                return Ok(product);
+                return Ok(mapper.Map<Product,ProductToReturnDto>(product)); 
             }
             else
             {
