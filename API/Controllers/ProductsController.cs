@@ -2,18 +2,18 @@
 using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
+using API.Errors;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseApiController
     {
         private readonly IGenericRepository<Product> _repoProduct;
         private readonly IGenericRepository<ProductBrand> _repoProductBrand;
@@ -31,24 +31,24 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IList<ProductToReturnDto>>> GetProduct()
+        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProduct()
         {
             var spec = new ProductsWithTypeAndBrandSpecificaion();
             var products = await _repoProduct.ListAsync(spec);
 
             if (products != null)
             {
-                //return Ok(products);
-                return products.Select(product => new ProductToReturnDto
-                {
-                    Id = product.Id,
-                    Description = product.Description,
-                    Name = product.Name,
-                    Price = product.Price,
-                    PictureUrl = product.PictureUrl,
-                    ProductBrand = product.ProductBrand.Name,
-                    ProductType = product.ProductType.Name
-                }).ToList();
+                return Ok(mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(products)); 
+                // return products.Select(product => new ProductToReturnDto
+                // {
+                //     Id = product.Id,
+                //     Description = product.Description,
+                //     Name = product.Name,
+                //     Price = product.Price,
+                //     PictureUrl = product.PictureUrl,
+                //     ProductBrand = product.ProductBrand.Name,
+                //     ProductType = product.ProductType.Name
+                // }).ToList();
             }
             else
             {
@@ -88,6 +88,8 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse),StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
             var spec = new ProductsWithTypeAndBrandSpecificaion(id);
@@ -111,7 +113,7 @@ namespace API.Controllers
             }
             else
             {
-                return NotFound();
+                return NotFound(new ApiResponse(404));
             }
         }
     }
